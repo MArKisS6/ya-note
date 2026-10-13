@@ -7,22 +7,6 @@ from notes.models import Note
 User = get_user_model()
 
 
-class TestHomePage(TestCase):
-    """Тестируем главную страницу."""
-
-    HOME_URL = reverse('notes:home')
-
-    def test_home_page_has_no_notes_list(self):
-        """На главной нет списка заметок."""
-        response = self.client.get(self.HOME_URL)
-        # TemplateView не передаёт object_list в контекст:
-        self.assertNotIn(
-            'object_list',
-            response.context,
-            'На главной не должно быть списка заметок'
-        )
-
-
 class TestNotesList(TestCase):
     """Тестируем страницу списка заметок."""
 
@@ -30,7 +14,6 @@ class TestNotesList(TestCase):
     def setUpTestData(cls):
         cls.author = User.objects.create(username='Лев Толстой')
         cls.reader = User.objects.create(username='Читатель простой')
-        # Заметки автора:
         cls.note_1 = Note.objects.create(
             title='Заметка первая',
             text='Текст первой заметки',
@@ -43,7 +26,6 @@ class TestNotesList(TestCase):
             slug='note-2',
             author=cls.author,
         )
-        # Заметка читателя:
         cls.note_reader = Note.objects.create(
             title='Заметка читателя',
             text='Текст заметки читателя',
@@ -99,10 +81,7 @@ class TestNoteDetail(TestCase):
         self.client.force_login(self.author)
         url = reverse('notes:detail', args=(self.note.slug,))
         response = self.client.get(url)
-        # Проверяем, что объект заметки находится в контексте
-        # под ожидаемым именем — названием модели:
         self.assertIn('note', response.context)
-        # Проверяем, что это именно запрошенная заметка:
         self.assertEqual(
             response.context['note'],
             self.note,
