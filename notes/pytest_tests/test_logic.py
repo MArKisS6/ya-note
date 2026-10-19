@@ -1,5 +1,6 @@
 # test_logic.py
 from pytest_django.asserts import assertRedirects
+import pytest
 
 from django.urls import reverse
 
@@ -27,3 +28,17 @@ def test_user_can_create_note(author_client, author, form_data):
     # но если хоть одна из этих проверок провалится - 
     # весь тест можно признать провалившимся, а последующие невыполненные проверки
     # не внесли бы в отчёт о тесте ничего принципиально важного.
+
+
+# Добавляем маркер, который обеспечит доступ к базе данных:
+@pytest.mark.django_db
+def test_anonymous_user_cant_create_note(client, form_data):
+    url = reverse('notes:add')
+    # Через анонимный клиент пытаемся создать заметку:
+    response = client.post(url, data=form_data)
+    login_url = reverse('users:login')
+    expected_url = f'{login_url}?next={url}'
+    # Проверяем, что произошла переадресация на страницу логина:
+    assertRedirects(response, expected_url)
+    # Считаем количество заметок в БД, ожидаем 0 заметок.
+    assert Note.objects.count() == 0
