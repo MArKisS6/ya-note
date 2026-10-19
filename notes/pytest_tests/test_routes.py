@@ -1,4 +1,3 @@
-# test_routes.py
 from http import HTTPStatus
 
 import pytest
@@ -19,7 +18,9 @@ def test_pages_availability_for_anonymous_user(client, name):
 def test_logout_availability_for_anonymous_user(client):
     url = reverse('users:logout')
     response = client.post(url)
-    assert response.status_code == HTTPStatus.OK
+    # В Django 5.x LogoutView принимает только POST;
+    # аноним получает редирект (302), а не 200.
+    assert response.status_code == HTTPStatus.FOUND
 
 
 @pytest.mark.parametrize(
