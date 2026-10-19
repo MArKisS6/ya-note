@@ -4,6 +4,8 @@ import pytest
 
 from pytils.translit import slugify
 
+from http import HTTPStatus
+
 from django.urls import reverse
 
 from notes.models import Note
@@ -74,3 +76,48 @@ def test_empty_slug(author_client, form_data):
     # Проверяем, что slug заметки соответствует ожидаемому:
     assert new_note.slug == expected_slug
 
+
+# В параметрах вызвана фикстура note: значит, в БД создана заметка.
+def test_author_can_edit_note(author_client, form_data, note):
+    # Получаем адрес страницы редактирования заметки:
+    url = reverse('notes:edit', args=(note.slug,))
+    # В POST-запросе на адрес редактирования заметки
+    # отправляем form_data - новые значения для полей заметки:
+    response = author_client.post(url, form_data)
+    # Проверяем редирект:
+    assertRedirects(response, reverse('notes:success'))
+    # Обновляем объект заметки note: получаем обновлённые данные из БД:
+    note.refresh_from_db()
+    # Проверяем, что атрибуты заметки соответствуют обновлённым:
+    assert note.title == form_data['title']
+    assert note.text == form_data['text']
+    assert note.slug == form_data['slug']
+
+
+def test_other_user_cant_edit_note(not_author_client, form_data, note):
+    url = reverse('notes:edit', args=(note.slug,))
+    response = not_author_client.post(url, form_data)
+    # Проверяем, что страница не найдена:
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    # Получаем новый объект запросом из БД.
+    note_from_db = Note.objects.get(id=note.id)
+    # Проверяем, что атрибуты объекта из БД равны атрибутам заметки до запроса.
+    assert note.title == note_from_db.title
+    assert note.text == note_from_db.text
+    assert note.slug == note_from_db.slug
+
+
+# test_logic.py
+...
+def test_author_can_delete_note(author_client, slug_for_args):
+    url = reverse('notes:delete', args=slug_for_args)
+    response = author_client.post(url)
+    assertRedirects(response, reverse('notes:success'))
+    assert Note.objects.count() == 0
+
+
+def test_other_user_cant_delete_note(not_author_client, slug_for_args):
+    url = reverse('notes:delete', args=slug_for_args)
+    response = not_author_client.post(url)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert Note.objects.count() == 1
