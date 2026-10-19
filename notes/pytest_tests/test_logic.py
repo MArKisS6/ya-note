@@ -59,12 +59,6 @@ def test_not_unique_slug(author_client, note, form_data):
     assert Note.objects.count() == 1
 
 
-# test_logic.py
-...
-# Дополнительно импортируем функцию slugify.
-from pytils.translit import slugify
-
-
 def test_empty_slug(author_client, form_data):
     url = reverse('notes:add')
     # Убираем поле slug из словаря:
@@ -79,3 +73,4 @@ def test_empty_slug(author_client, form_data):
     expected_slug = slugify(form_data['title'])
     # Проверяем, что slug заметки соответствует ожидаемому:
     assert new_note.slug == expected_slug
+
