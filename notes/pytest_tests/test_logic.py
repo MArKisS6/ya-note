@@ -2,12 +2,12 @@
 from pytest_django.asserts import assertRedirects, assertFormError
 import pytest
 
+from pytils.translit import slugify
+
 from django.urls import reverse
 
 from notes.models import Note
 from notes.forms import WARNING
-
-from pytils.translit import slugify
 
 
 # Указываем фикстуру form_data в параметрах теста.
@@ -58,3 +58,24 @@ def test_not_unique_slug(author_client, note, form_data):
     # Убеждаемся, что количество заметок в базе осталось равным 1:
     assert Note.objects.count() == 1
 
+
+# test_logic.py
+...
+# Дополнительно импортируем функцию slugify.
+from pytils.translit import slugify
+
+
+def test_empty_slug(author_client, form_data):
+    url = reverse('notes:add')
+    # Убираем поле slug из словаря:
+    form_data.pop('slug')
+    response = author_client.post(url, data=form_data)
+    # Проверяем, что даже без slug заметка была создана:
+    assertRedirects(response, reverse('notes:success'))
+    assert Note.objects.count() == 1
+    # Получаем созданную заметку из базы:
+    new_note = Note.objects.get()
+    # Формируем ожидаемый slug:
+    expected_slug = slugify(form_data['title'])
+    # Проверяем, что slug заметки соответствует ожидаемому:
+    assert new_note.slug == expected_slug
