@@ -107,8 +107,6 @@ def test_other_user_cant_edit_note(not_author_client, form_data, note):
     assert note.slug == note_from_db.slug
 
 
-# test_logic.py
-...
 def test_author_can_delete_note(author_client, slug_for_args):
     url = reverse('notes:delete', args=slug_for_args)
     response = author_client.post(url)
