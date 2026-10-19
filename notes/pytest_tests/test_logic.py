@@ -7,6 +7,8 @@ from django.urls import reverse
 from notes.models import Note
 from notes.forms import WARNING
 
+from pytils.translit import slugify
+
 
 # Указываем фикстуру form_data в параметрах теста.
 def test_user_can_create_note(author_client, author, form_data):
